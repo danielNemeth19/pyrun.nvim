@@ -1,10 +1,7 @@
-print("LOADING")
-vim.api.nvim_create_autocmd({'BufEnter', 'BufWinEnter'}, {
-    pattern = { "*.*" },
+vim.api.nvim_create_autocmd({ 'BufReadPost' }, {
+    pattern = { "*.py" },
     callback = function()
-        vim.notify("autocommand is running")
-        -- local pr = require("pyrun")
-        -- print(pr.run())
+        local pr = require("pyrun")
+        vim.keymap.set("n", "<leader>t", pr.run)
     end
 })
-print("LOADED")
