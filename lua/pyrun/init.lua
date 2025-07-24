@@ -1,14 +1,14 @@
 local M = {}
 
--- local is_django = vim.uv.fs_stat(cwd .. "/manage.py") ~= nil
-
 function M.run()
   local fp = vim.api.nvim_buf_get_name(0)
   local manage_fp = M.find_manage_file(fp)
   if manage_fp ~= nil then
-    -- vim.notify(manage_fp, vim.log.levels.INFO)
+    vim.notify(manage_fp, vim.log.levels.DEBUG)
     local module_path = M.set_module_path(fp, manage_fp)
-    vim.notify("python manage.py " .. module_path, vim.log.levels.INFO)
+    local command = "!python " .. manage_fp .. " test "  .. module_path
+    vim.notify(command, vim.log.levels.DEBUG)
+    vim.cmd(command)
   end
 end
 
@@ -22,7 +22,7 @@ function M.find_manage_file(filepath)
     path = filepath
   })
   local manage_file = result[1]
-  -- vim.notify("manage_fp is " .. manage_file, vim.log.levels.INFO)
+  vim.notify("manage_fp is " .. manage_file, vim.log.levels.DEBUG)
   return manage_file
 end
 
@@ -31,7 +31,7 @@ end
 ---@param manage_fp string
 function M.set_module_path(fp, manage_fp)
   local module_path = string.gsub(fp, ".py", "")
-  -- vim.notify("module_path is" .. module_path, vim.log.levels.INFO)
+  vim.notify("module_path is" .. module_path, vim.log.levels.DEBUG)
   local project_root = vim.fs.dirname(manage_fp)
   local parts = vim.split(module_path, project_root)
   local module = ""
