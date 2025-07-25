@@ -6,7 +6,7 @@ function M.run()
   if manage_fp ~= nil then
     vim.notify(manage_fp, vim.log.levels.DEBUG)
     local module_path = M.set_module_path(fp, manage_fp)
-    local command = "!python " .. manage_fp .. " test "  .. module_path
+    local command = "!python " .. manage_fp .. " test " .. module_path
     vim.notify(command, vim.log.levels.DEBUG)
     vim.cmd(command)
   end
@@ -26,16 +26,16 @@ function M.find_manage_file(filepath)
   return manage_file
 end
 
----@return string module_path
 ---@param fp string
 ---@param manage_fp string
+---@return string module_path
 function M.set_module_path(fp, manage_fp)
   local module_path = string.gsub(fp, ".py", "")
   vim.notify("module_path is" .. module_path, vim.log.levels.DEBUG)
   local project_root = vim.fs.dirname(manage_fp)
-  local parts = vim.split(module_path, project_root)
+  local m = string.sub(module_path, string.len(project_root)+1, string.len(module_path))
   local module = ""
-  for _, i in ipairs(vim.split(parts[2], "/")) do
+  for _, i in ipairs(vim.split(m, "/")) do
     if module == "" then
       module = i
     else
