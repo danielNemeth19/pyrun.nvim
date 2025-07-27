@@ -6,9 +6,10 @@ function M.run()
   if manage_fp ~= nil then
     vim.notify(manage_fp, vim.log.levels.DEBUG)
     local module_path = M.set_module_path(fp, manage_fp)
-    local command = "!python " .. manage_fp .. " test " .. module_path
-    vim.notify(command, vim.log.levels.DEBUG)
-    vim.cmd(command)
+    local command = { "python", manage_fp, "test", module_path }
+    -- vim.cmd(command)
+    vim.print(command)
+    M.open_window(command)
   end
 end
 
@@ -33,7 +34,7 @@ function M.set_module_path(fp, manage_fp)
   local module_path = string.gsub(fp, ".py", "")
   vim.notify("module_path is" .. module_path, vim.log.levels.DEBUG)
   local project_root = vim.fs.dirname(manage_fp)
-  local m = string.sub(module_path, string.len(project_root)+1, string.len(module_path))
+  local m = string.sub(module_path, string.len(project_root) + 1, string.len(module_path))
   local module = ""
   for _, i in ipairs(vim.split(m, "/")) do
     if module == "" then
@@ -43,6 +44,35 @@ function M.set_module_path(fp, manage_fp)
     end
   end
   return module
+end
+
+function M.open_window(command)
+  local buff_n = vim.api.nvim_create_buf(true, true)
+  local win_id = vim.api.nvim_open_win(buff_n, false, {
+    relative = "win",
+    width = 100,
+    height = 20,
+    bufpos = { 30, 10 },
+    style = "minimal",
+    border = "single",
+    title = "My window"
+  })
+  local _ = vim.fn.jobstart(command, {
+    on_stdout = function(_, data)
+      if data then
+        vim.api.nvim_buf_set_lines(buff_n, -1, -1, false, data)
+      end
+    end,
+    on_stderr = function(_, data)
+      if data then
+        vim.api.nvim_buf_set_lines(buff_n, -1, -1, false, data)
+      end
+    end,
+    on_exit = function()
+      os.execute("sleep 2")
+      vim.api.nvim_win_close(win_id, false)
+    end
+  })
 end
 
 return M
