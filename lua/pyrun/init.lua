@@ -7,7 +7,6 @@ function M.run()
     vim.notify(manage_fp, vim.log.levels.DEBUG)
     local module_path = M.set_module_path(fp, manage_fp)
     local command = { "python", manage_fp, "test", module_path }
-    -- vim.cmd(command)
     vim.print(command)
     M.open_window(command)
   end
@@ -46,13 +45,27 @@ function M.set_module_path(fp, manage_fp)
   return module
 end
 
+---@param width integer
+---@param height integer
+function M.get_coordinates(width, height)
+  local center_r = vim.o.lines / 2
+  local center_c = vim.o.columns / 2
+  local x_col = center_c - (width / 2)
+  local y_row = center_r - (height / 2)
+  return x_col, y_row
+end
+
 function M.open_window(command)
+  local width = 100
+  local height = 20
+  local x, y = M.get_coordinates(width, height)
   local buff_n = vim.api.nvim_create_buf(true, true)
   local win_id = vim.api.nvim_open_win(buff_n, false, {
     relative = "win",
-    width = 100,
-    height = 20,
-    bufpos = { 30, 10 },
+    width = width,
+    height = height,
+    row = y,
+    col = x,
     style = "minimal",
     border = "single",
     title = "My window"
