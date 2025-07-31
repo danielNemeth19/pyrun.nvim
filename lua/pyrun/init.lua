@@ -7,7 +7,6 @@ function M.run()
     vim.notify(manage_fp, vim.log.levels.DEBUG)
     local module_path = M.set_module_path(fp, manage_fp)
     local command = { "python", manage_fp, "test", module_path }
-    vim.print(command)
     M.open_window(command)
   end
 end
@@ -47,6 +46,8 @@ end
 
 ---@param width integer
 ---@param height integer
+---@return integer x_col
+---@return integer y_row
 function M.get_coordinates(width, height)
   local center_r = vim.o.lines / 2
   local center_c = vim.o.columns / 2
@@ -56,31 +57,28 @@ function M.get_coordinates(width, height)
 end
 
 function M.open_window(command)
-  local width = 100
-  local height = 20
-  local x, y = M.get_coordinates(width, height)
+  local width = 150
+  local height = 40
+  local col, row = M.get_coordinates(width, height)
   local buff_n = vim.api.nvim_create_buf(true, true)
   local win_id = vim.api.nvim_open_win(buff_n, false, {
     relative = "win",
     width = width,
     height = height,
-    row = y,
-    col = x,
+    row = row,
+    col = col,
     style = "minimal",
     border = "single",
     title = "My window"
   })
   local _ = vim.fn.jobstart(command, {
     on_stdout = function(_, data)
-      if data then
-        vim.api.nvim_buf_set_lines(buff_n, -1, -1, false, data)
-      end
+      vim.api.nvim_buf_set_lines(buff_n, -1, -1, false, data)
     end,
     on_stderr = function(_, data)
-      if data then
-        vim.api.nvim_buf_set_lines(buff_n, -1, -1, false, data)
-      end
+      vim.api.nvim_buf_set_lines(buff_n, -1, -1, false, data)
     end,
+    stderr_buffered = true,
     on_exit = function()
       os.execute("sleep 2")
       vim.api.nvim_win_close(win_id, false)
