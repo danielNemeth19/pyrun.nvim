@@ -1,5 +1,17 @@
 local M = {}
 
+local width = 150
+local height = 40
+
+local window_config = {
+  relative = "win",
+  width = width,
+  height = height,
+  style = "minimal",
+  border = "single",
+  title = "My window"
+}
+
 function M.run()
   local fp = vim.api.nvim_buf_get_name(0)
   local manage_fp = M.find_manage_file(fp)
@@ -7,7 +19,8 @@ function M.run()
     vim.notify(manage_fp, vim.log.levels.DEBUG)
     local module_path = M.set_module_path(fp, manage_fp)
     local command = { "python", manage_fp, "test", module_path }
-    M.open_window(command)
+    local bufnr, win_id = M.create_window_and_buffer(window_config)
+    M.run_command(bufnr, win_id, command)
   end
 end
 
@@ -56,27 +69,34 @@ function M.get_coordinates(width, height)
   return x_col, y_row
 end
 
-function M.open_window(command)
-  local width = 150
-  local height = 40
+---@param opts table
+---@return integer
+---@return integer
+function M.create_window_and_buffer(opts)
   local col, row = M.get_coordinates(width, height)
-  local buff_n = vim.api.nvim_create_buf(true, true)
-  local win_id = vim.api.nvim_open_win(buff_n, false, {
-    relative = "win",
-    width = width,
-    height = height,
-    row = row,
-    col = col,
-    style = "minimal",
-    border = "single",
-    title = "My window"
-  })
-  local _ = vim.fn.jobstart(command, {
+  local bufnr = vim.api.nvim_create_buf(true, true)
+  opts = vim.tbl_extend('force', opts, { col = col, row = row })
+  local win_id = vim.api.nvim_open_win(bufnr, false, opts)
+  return bufnr, win_id
+end
+
+---@param bufnr integer
+---@param win_id integer
+---@param command table
+function M.run_command(bufnr, win_id, command)
+  vim.fn.jobstart(command, {
     on_stdout = function(_, data)
-      vim.api.nvim_buf_set_lines(buff_n, -1, -1, false, data)
+      vim.api.nvim_buf_set_lines(bufnr, -1, -1, false, data)
     end,
     on_stderr = function(_, data)
-      vim.api.nvim_buf_set_lines(buff_n, -1, -1, false, data)
+      local ns_id = vim.api.nvim_create_namespace("testing")
+      vim.api.nvim_set_hl(0, "successGreen", { fg = "cyan", bold = true })
+      vim.api.nvim_buf_set_lines(bufnr, -1, -1, false, data)
+      local start_line = vim.api.nvim_buf_line_count(bufnr) - #data
+      local end_line = vim.api.nvim_buf_line_count(bufnr)
+      for i = start_line, end_line -1 do
+        vim.hl.range(bufnr, ns_id, "successGreen", { i, 0 }, { i, -1 }, { inclusive = true })
+      end
     end,
     stderr_buffered = true,
     on_exit = function()
