@@ -1,12 +1,12 @@
 local M = {}
 
-local width = 150
-local height = 40
+local default_width = 150
+local default_height = 40
 
 local window_config = {
   relative = "win",
-  width = width,
-  height = height,
+  width = default_width,
+  height = default_height,
   style = "minimal",
   border = "single",
   title = "My window"
@@ -47,11 +47,11 @@ function M.set_module_path(fp, manage_fp)
   local project_root = vim.fs.dirname(manage_fp)
   local m = string.sub(module_path, string.len(project_root) + 1, string.len(module_path))
   local module = ""
-  for _, i in ipairs(vim.split(m, "/")) do
+  for _, path_part in ipairs(vim.split(m, "/")) do
     if module == "" then
-      module = i
+      module = path_part
     else
-      module = module .. "." .. i
+      module = module .. "." .. path_part
     end
   end
   return module
@@ -73,7 +73,7 @@ end
 ---@return integer
 ---@return integer
 function M.create_window_and_buffer(opts)
-  local col, row = M.get_coordinates(width, height)
+  local col, row = M.get_coordinates(default_width, default_height)
   local bufnr = vim.api.nvim_create_buf(true, true)
   opts = vim.tbl_extend('force', opts, { col = col, row = row })
   local win_id = vim.api.nvim_open_win(bufnr, false, opts)
@@ -90,18 +90,20 @@ function M.run_command(bufnr, win_id, command)
     end,
     on_stderr = function(_, data)
       local ns_id = vim.api.nvim_create_namespace("testing")
-      vim.api.nvim_set_hl(0, "successGreen", { fg = "cyan", bold = true })
+      vim.api.nvim_set_hl(0, "successGreen", { fg = "#98c379", bg = "NONE", bold = true })
       vim.api.nvim_buf_set_lines(bufnr, -1, -1, false, data)
-      local start_line = vim.api.nvim_buf_line_count(bufnr) - #data
-      local end_line = vim.api.nvim_buf_line_count(bufnr)
-      for i = start_line, end_line -1 do
-        vim.hl.range(bufnr, ns_id, "successGreen", { i, 0 }, { i, -1 }, { inclusive = true })
+
+      local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
+      for line, row in ipairs(lines) do
+        local first_char = string.sub(row, 1, 1)
+        if first_char == "." then
+          vim.hl.range(bufnr, ns_id, "successGreen", { line - 1, 0 }, { line - 1, -1 }, { inclusive = true })
+        end
       end
     end,
     stderr_buffered = true,
     on_exit = function()
-      os.execute("sleep 2")
-      vim.api.nvim_win_close(win_id, false)
+      vim.keymap.set("n", "q", function() vim.api.nvim_win_close(win_id, false) end, { buffer = bufnr })
     end
   })
 end
