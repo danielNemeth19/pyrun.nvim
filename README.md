@@ -29,6 +29,7 @@ For this to work, the floating window needs to be active. You can a make it acti
 * configurable keymaps
 * implement running closest test case
 * implement running closest test class
+* investigate treesitter playground for `def` and `class` targeting
 * providing custom commands
 * improve coloring of test result: right now everything is green ('success')
 * look at stderr buffering - maybe show test result output without buffering?

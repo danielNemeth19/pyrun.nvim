@@ -1,4 +1,13 @@
 local M = {}
+local default_opts = require("pyrun.config").default_opts
+
+
+function M.setup(opts)
+  M.options = vim.tbl_deep_extend("force", {}, default_opts, opts or {})
+  M.options = default_opts
+  vim.keymap.set("n", "<leader>t", M.run)
+end
+
 
 local default_width = 150
 local default_height = 40
@@ -19,7 +28,7 @@ function M.run()
     vim.notify(manage_fp, vim.log.levels.DEBUG)
     local module_path = M.set_module_path(fp, manage_fp)
     local command = { "python", manage_fp, "test", module_path }
-    local bufnr, win_id = M.create_window_and_buffer(window_config)
+    local bufnr, win_id = M.create_window_and_buffer(M.options.window_config)
     M.run_command(bufnr, win_id, command)
   end
 end
@@ -73,7 +82,7 @@ end
 ---@return integer
 ---@return integer
 function M.create_window_and_buffer(opts)
-  local col, row = M.get_coordinates(default_width, default_height)
+  local col, row = M.get_coordinates(opts.width, opts.height)
   local bufnr = vim.api.nvim_create_buf(true, true)
   opts = vim.tbl_extend('force', opts, { col = col, row = row })
   local win_id = vim.api.nvim_open_win(bufnr, false, opts)
@@ -89,15 +98,12 @@ function M.run_command(bufnr, win_id, command)
       vim.api.nvim_buf_set_lines(bufnr, -1, -1, false, data)
     end,
     on_stderr = function(_, data)
-      local ns_id = vim.api.nvim_create_namespace("testing")
-      vim.api.nvim_set_hl(0, "successGreen", { fg = "#98c379", bg = "NONE", bold = true })
       vim.api.nvim_buf_set_lines(bufnr, -1, -1, false, data)
-
       local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
       for line, row in ipairs(lines) do
         local first_char = string.sub(row, 1, 1)
         if first_char == "." then
-          vim.hl.range(bufnr, ns_id, "successGreen", { line - 1, 0 }, { line - 1, -1 }, { inclusive = true })
+          vim.hl.range(bufnr, M.options.ns_id, M.colors.success.name, { line - 1, 0 }, { line - 1, -1 }, { inclusive = true })
         end
       end
     end,
