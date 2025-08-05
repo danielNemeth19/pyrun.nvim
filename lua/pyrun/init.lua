@@ -2,24 +2,11 @@ local M = {}
 local default_opts = require("pyrun.config").default_opts
 
 
+---@param opts? table
 function M.setup(opts)
   M.options = vim.tbl_deep_extend("force", {}, default_opts, opts or {})
-  M.options = default_opts
-  vim.keymap.set("n", "<leader>t", M.run)
+  vim.keymap.set("n", M.options.keymaps.run_all, M.run)
 end
-
-
-local default_width = 150
-local default_height = 40
-
-local window_config = {
-  relative = "win",
-  width = default_width,
-  height = default_height,
-  style = "minimal",
-  border = "single",
-  title = "My window"
-}
 
 function M.run()
   local fp = vim.api.nvim_buf_get_name(0)
@@ -51,19 +38,12 @@ end
 ---@param manage_fp string
 ---@return string module_path
 function M.set_module_path(fp, manage_fp)
-  local module_path = string.gsub(fp, ".py", "")
-  vim.notify("module_path is" .. module_path, vim.log.levels.DEBUG)
   local project_root = vim.fs.dirname(manage_fp)
-  local m = string.sub(module_path, string.len(project_root) + 1, string.len(module_path))
-  local module = ""
-  for _, path_part in ipairs(vim.split(m, "/")) do
-    if module == "" then
-      module = path_part
-    else
-      module = module .. "." .. path_part
-    end
-  end
-  return module
+  -- to get path of test file relative to project root, without leading "/"
+  local relative_path = fp:sub(project_root:len() + 2, fp:len())
+  local without_ext = vim.fn.fnamemodify(relative_path, ":r")
+  local module_path = without_ext:gsub("/", ".")
+  return module_path
 end
 
 ---@param width integer
@@ -71,8 +51,8 @@ end
 ---@return integer x_col
 ---@return integer y_row
 function M.get_coordinates(width, height)
-  local center_r = vim.o.lines / 2
   local center_c = vim.o.columns / 2
+  local center_r = vim.o.lines / 2
   local x_col = center_c - (width / 2)
   local y_row = center_r - (height / 2)
   return x_col, y_row
@@ -85,7 +65,7 @@ function M.create_window_and_buffer(opts)
   local col, row = M.get_coordinates(opts.width, opts.height)
   local bufnr = vim.api.nvim_create_buf(true, true)
   opts = vim.tbl_extend('force', opts, { col = col, row = row })
-  local win_id = vim.api.nvim_open_win(bufnr, false, opts)
+  local win_id = vim.api.nvim_open_win(bufnr, true, opts)
   return bufnr, win_id
 end
 
@@ -103,13 +83,16 @@ function M.run_command(bufnr, win_id, command)
       for line, row in ipairs(lines) do
         local first_char = string.sub(row, 1, 1)
         if first_char == "." then
-          vim.hl.range(bufnr, M.options.ns_id, M.colors.success.name, { line - 1, 0 }, { line - 1, -1 }, { inclusive = true })
+          vim.hl.range(bufnr, M.options.ns_id, M.colors.success.name, { line - 1, 0 }, { line - 1, -1 },
+            { inclusive = true })
         end
       end
     end,
     stderr_buffered = true,
     on_exit = function()
-      vim.keymap.set("n", "q", function() vim.api.nvim_win_close(win_id, false) end, { buffer = bufnr })
+      vim.keymap.set("n", M.options.keymaps.close_float, function()
+        vim.api.nvim_win_close(win_id, false)
+      end, { buffer = bufnr })
     end
   })
 end
