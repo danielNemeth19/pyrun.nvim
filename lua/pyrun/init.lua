@@ -1,11 +1,14 @@
 local M = {}
-local default_opts = require("pyrun.config").default_opts
+local default_opts = require("pyrun.config").opts
+local config = require("pyrun.config").config
 
-
----@param opts? table
+---@param opts? pyrun.Opts
 function M.setup(opts)
+  ---@type pyrun.Opts
   M.options = vim.tbl_deep_extend("force", {}, default_opts, opts or {})
   vim.keymap.set("n", M.options.keymaps.run_all, M.run)
+  ---@type pyrun.Config
+  M.config = config
 end
 
 function M.run()
@@ -58,7 +61,7 @@ function M.get_coordinates(width, height)
   return x_col, y_row
 end
 
----@param opts table
+---@param opts pyrun.window_config
 ---@return integer
 ---@return integer
 function M.create_window_and_buffer(opts)
@@ -83,7 +86,7 @@ function M.run_command(bufnr, win_id, command)
       for line, row in ipairs(lines) do
         local first_char = string.sub(row, 1, 1)
         if first_char == "." then
-          vim.hl.range(bufnr, M.options.ns_id, M.colors.success.name, { line - 1, 0 }, { line - 1, -1 },
+          vim.hl.range(bufnr, M.config.ns_id, M.config.color_names.success, { line - 1, 0 }, { line - 1, -1 },
             { inclusive = true })
         end
       end

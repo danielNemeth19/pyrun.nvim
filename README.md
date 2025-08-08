@@ -32,7 +32,7 @@ return {
 
 ## Configuration
 ### Using defaults
-The plugin is lazy loaded for python files. In case you want use the plugin without any customization, the preferred config is:
+The plugin is lazy loaded for python files. In case you want to use the plugin without any customization, the preferred config is:
 ```lua
 return {
   {
