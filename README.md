@@ -111,3 +111,4 @@ The result of the test run is shown in a floating window. To close it, use `q`.
 * improve coloring of test result: right now everything is green ('success')
 * look at stderr buffering - maybe show test result output without buffering?
 * lazy loading based on \*test\*.py files
+* Logging, with custom command to open log file

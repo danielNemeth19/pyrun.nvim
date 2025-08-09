@@ -1,4 +1,3 @@
--- TODO: think about adding color keys (or maybe whole color config?)
 -- TODO: validate config (ignore ns_id)
 ---@class pyrun.Colors
 ---@field success string
@@ -66,7 +65,7 @@ local opts = {
 
 ---@type pyrun.Setup
 local setup_table = {
-  opts = opts,
-  config = config
+  config = config,
+  opts = opts
 }
 return setup_table

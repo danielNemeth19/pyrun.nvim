@@ -1,17 +1,17 @@
 local M = {}
-local default_opts = require("pyrun.config").opts
 local config = require("pyrun.config").config
+local default_opts = require("pyrun.config").opts
 
 ---@param opts? pyrun.Opts
 function M.setup(opts)
   ---@type pyrun.Opts
   M.options = vim.tbl_deep_extend("force", {}, default_opts, opts or {})
-  vim.keymap.set("n", M.options.keymaps.run_all, M.run)
+  vim.keymap.set("n", M.options.keymaps.run_all, M.run_all)
   ---@type pyrun.Config
   M.config = config
 end
 
-function M.run()
+function M.run_all()
   local fp = vim.api.nvim_buf_get_name(0)
   local manage_fp = M.find_manage_file(fp)
   if manage_fp ~= nil then
