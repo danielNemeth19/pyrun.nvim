@@ -6,12 +6,12 @@ describe("pyrun-init", function()
     require("pyrun")
   end)
   it("can be configured with default options", function ()
-    local default_opts = require("pyrun.config").default_opts
+    local default_opts = require("pyrun.config").opts
     plugin.setup()
     assert.same(default_opts, plugin.options)
   end)
   it("can be configured with custom options", function ()
-    local default_win_opts = require("pyrun.config").default_opts.window_config
+    local default_win_opts = require("pyrun.config").opts.window_config
     local opts = {
       window_config = {
         title = "Test title"

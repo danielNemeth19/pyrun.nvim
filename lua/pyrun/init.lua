@@ -7,8 +7,16 @@ function M.setup(opts)
   ---@type pyrun.Opts
   M.options = vim.tbl_deep_extend("force", {}, default_opts, opts or {})
   vim.keymap.set("n", M.options.keymaps.run_all, M.run_all)
+  vim.keymap.set("n", '<leader>q', M.tsparse)
   ---@type pyrun.Config
   M.config = config
+end
+
+function M.tsparse()
+  local tree = vim.treesitter.get_parser():parse()[1]
+  for k,v in tree:root():iter_children() do
+    print(k, v)
+  end
 end
 
 function M.run_all()
