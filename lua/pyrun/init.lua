@@ -12,11 +12,26 @@ function M.setup(opts)
   M.config = config
 end
 
-function M.tsparse()
-  local tree = vim.treesitter.get_parser():parse()[1]
-  for k,v in tree:root():iter_children() do
-    print(k, v)
+function M.get_closest_class(root, current_line)
+  local classes = {}
+  local query = vim.treesitter.query.parse("python", [[(class_definition name: (identifier) @type)]])
+  for id, node, _ in query:iter_captures(root, 0, 0, current_line) do
+    P(id, node)
+    local current_klass = vim.treesitter.get_node_text(node, 0)
+    table.insert(classes, current_klass)
   end
+  local the_one = classes[#classes]
+  print(the_one)
+end
+
+function M.tsparse()
+  local parser = vim.treesitter.get_parser(0, "python")
+  local tree = parser:parse()[1]
+  local root = tree:root()
+
+  local pos = vim.api.nvim_win_get_cursor(0)
+  local line, _ = pos[1], pos[2]
+  M.get_closest_class(root, line)
 end
 
 function M.run_all()
