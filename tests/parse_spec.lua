@@ -61,7 +61,7 @@ describe("pyrun-init", function()
     vim.api.nvim_win_set_cursor(0, {20, 11})
 
     local pos = vim.api.nvim_win_get_cursor(0)
-    local line, col = pos[1], pos[2]
+    local line, _ = pos[1], pos[2]
 
     local query = vim.treesitter.query.parse("python", [[(class_definition name: (identifier) @type)]])
     for id, node, metadata, match, tree in query:iter_captures(root, 0, 0, line, { match_limit = 1 }) do

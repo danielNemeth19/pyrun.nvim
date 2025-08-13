@@ -7,43 +7,56 @@ function M.setup(opts)
   ---@type pyrun.Opts
   M.options = vim.tbl_deep_extend("force", {}, default_opts, opts or {})
   vim.keymap.set("n", M.options.keymaps.run_all, M.run_all)
-  vim.keymap.set("n", '<leader>q', M.tsparse)
+  vim.keymap.set("n", M.options.keymaps.run_closest_class, M.run_closest_class)
   ---@type pyrun.Config
   M.config = config
 end
 
-function M.get_closest_class(root, current_line)
-  local classes = {}
-  local query = vim.treesitter.query.parse("python", [[(class_definition name: (identifier) @type)]])
-  for id, node, _ in query:iter_captures(root, 0, 0, current_line) do
-    P(id, node)
-    local current_klass = vim.treesitter.get_node_text(node, 0)
-    table.insert(classes, current_klass)
-  end
-  local the_one = classes[#classes]
-  print(the_one)
-end
-
-function M.tsparse()
-  local parser = vim.treesitter.get_parser(0, "python")
-  local tree = parser:parse()[1]
-  local root = tree:root()
-
-  local pos = vim.api.nvim_win_get_cursor(0)
-  local line, _ = pos[1], pos[2]
-  M.get_closest_class(root, line)
-end
-
-function M.run_all()
+function M.ctx_setup()
   local fp = vim.api.nvim_buf_get_name(0)
   local manage_fp = M.find_manage_file(fp)
   if manage_fp ~= nil then
     vim.notify(manage_fp, vim.log.levels.DEBUG)
     local module_path = M.set_module_path(fp, manage_fp)
-    local command = { "python", manage_fp, "test", module_path }
-    local bufnr, win_id = M.create_window_and_buffer(M.options.window_config)
-    M.run_command(bufnr, win_id, command)
+    return manage_fp, module_path
   end
+end
+
+function M._get_closest_class(root_node, current_line)
+  local classes = {}
+  local query = vim.treesitter.query.parse("python", [[(class_definition name: (identifier) @type)]])
+  for _, node in query:iter_captures(root_node, 0, 0, current_line) do
+    local current_klass = vim.treesitter.get_node_text(node, 0)
+    table.insert(classes, current_klass)
+  end
+  local klass = classes[#classes]
+  return klass
+end
+
+function M.get_closest_class()
+  local parser = vim.treesitter.get_parser(0, "python")
+  local tree = parser:parse()[1]
+  local root = tree:root()
+  local pos = vim.api.nvim_win_get_cursor(0)
+  local line, _ = pos[1], pos[2]
+  local k = M._get_closest_class(root, line)
+  return k
+end
+
+function M.run_closest_class()
+  local manage_fp, module_path = M.ctx_setup()
+  local class_to_run = M.get_closest_class()
+  local class_path = module_path .. "." .. class_to_run
+  local command = { "python", manage_fp, "test", class_path }
+  local bufnr, win_id = M.create_window_and_buffer(M.options.window_config, class_to_run)
+  M.run_command(bufnr, win_id, command)
+end
+
+function M.run_all()
+  local manage_fp, module_path = M.ctx_setup()
+  local command = { "python", manage_fp, "test", module_path }
+  local bufnr, win_id = M.create_window_and_buffer(M.options.window_config, module_path)
+  M.run_command(bufnr, win_id, command)
 end
 
 ---@param filepath string
@@ -85,12 +98,15 @@ function M.get_coordinates(width, height)
 end
 
 ---@param opts pyrun.window_config
+---@param title_suffix string
 ---@return integer
 ---@return integer
-function M.create_window_and_buffer(opts)
+function M.create_window_and_buffer(opts, title_suffix)
   local col, row = M.get_coordinates(opts.width, opts.height)
   local bufnr = vim.api.nvim_create_buf(true, true)
-  opts = vim.tbl_extend('force', opts, { col = col, row = row })
+  local title = opts.title_prefix .. title_suffix
+  opts = vim.tbl_extend('force', opts, { col = col, row = row, title = title })
+  opts.title_prefix = nil
   local win_id = vim.api.nvim_open_win(bufnr, true, opts)
   return bufnr, win_id
 end

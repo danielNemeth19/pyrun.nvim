@@ -9,6 +9,7 @@
 
 ---@class pyrun.keymaps
 ---@field run_all string
+---@field run_closest_class string
 ---@field close_float string
 
 ---@class pyrun.window_config
@@ -17,7 +18,7 @@
 ---@field height integer
 ---@field style string
 ---@field border string
----@field title string
+---@field title_prefix string
 
 ---@class pyrun.Opts
 ---@field keymaps pyrun.keymaps
@@ -42,7 +43,8 @@ local config = {
 
 ---@type pyrun.keymaps
 local keymap_presets = {
-  run_all = "<leader>t",
+  run_all = "<leader>tt",
+  run_closest_class = "<leader>t",
   close_float = "q"
 }
 
@@ -53,7 +55,7 @@ local window_config = {
   height = 40,
   style = "minimal",
   border = "single",
-  title = "Running tests",
+  title_prefix = "Running tests for ",
 }
 
 ---@type pyrun.Opts

@@ -12,7 +12,9 @@ Project is aimed at running all python unit tests in the current buffer at any g
 * [TODO](#todo)
 
 ## Current state
-Currently, the plugin only supports Django projects and it is only capable to run all tests found in the current buffer.
+Currently, the plugin only supports Django projects. It is capable to run:
+* all tests found in the current buffer
+* all tests of the 'closest' test class - this is decided based on the cursor position. In this mode, plugin runs all tests in the parent class under the cursor.
 
 The output of the test run is presented in a floating window, centered in the middle of the screen.
 
@@ -96,17 +98,20 @@ return {
 ```
 
 ## Default Mappings:
-| Insert  | Normal    | Action                                     |
-| ------- | --------- | ------------------------------------------ |
-|   -     |`<leader>t`| Triggers running all tests in file         |
-|   -     |`q`        | Closes floating window showing test run    |
+| Insert  | Normal     | Action                               |
+| ------- | ---------- | -------------------------------------|
+|   -     |`<leader>tt`| Runs all tests in file               |
+|   -     |`<leader>t` | Runs all tests of parent test class* |
+|   -     |`q`         | Closes results window                |
 
 The result of the test run is shown in a floating window. To close it, use `q`. 
 
+\*In this mode runs all tests in the parent test class when the cursor is inside any test belonging to that class.
+
 ## TODO:
-* implement running closest test case
+* implement running closest test case - done
 * implement running closest test class
-* investigate treesitter playground for `def` and `class` targeting
+* investigate treesitter playground for `def` and `class` targeting - done for `class`, on track for `def`
 * providing custom commands
 * improve coloring of test result: right now everything is green ('success')
 * look at stderr buffering - maybe show test result output without buffering?
