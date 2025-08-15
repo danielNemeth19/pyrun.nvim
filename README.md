@@ -1,6 +1,6 @@
 # Pyrun
 
-Project is aimed at running all python unit tests in the current buffer at any granularity.
+A plugin to run the unittests of the current buffer, at any granularity.
 
 ## Table of Contents
 * [Current state](#current-state)
