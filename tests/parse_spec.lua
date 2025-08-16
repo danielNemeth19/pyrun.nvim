@@ -58,7 +58,7 @@ describe("pyrun-init", function()
     local tree = parser:parse()[1]
     local root = tree:root()
 
-    vim.api.nvim_win_set_cursor(0, {20, 11})
+    vim.api.nvim_win_set_cursor(0, { 20, 11 })
 
     local pos = vim.api.nvim_win_get_cursor(0)
     local line, _ = pos[1], pos[2]

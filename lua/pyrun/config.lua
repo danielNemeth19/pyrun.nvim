@@ -62,7 +62,6 @@ local window_config = {
 local opts = {
   window_config = window_config,
   keymaps = keymap_presets,
-  mas = "asdad"
 }
 
 ---@type pyrun.Setup

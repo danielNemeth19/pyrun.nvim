@@ -109,11 +109,12 @@ The result of the test run is shown in a floating window. To close it, use `q`.
 \*In this mode runs all tests in the parent test class when the cursor is inside any test belonging to that class.
 
 ## TODO:
-* implement running closest test case - done
-* implement running closest test class
+* implement running closest test class - done
+* implement running closest test case
 * investigate treesitter playground for `def` and `class` targeting - done for `class`, on track for `def`
 * providing custom commands
 * improve coloring of test result: right now everything is green ('success')
 * look at stderr buffering - maybe show test result output without buffering?
 * lazy loading based on \*test\*.py files
 * Logging, with custom command to open log file
+* metatables for inheritance?
