@@ -40,15 +40,13 @@ function Runner:set_module_path(fp)
   return module_path
 end
 
----@param width integer
----@param height integer
 ---@return integer x_col
 ---@return integer y_row
-function Runner:get_coordinates(width, height)
+function Runner:get_coordinates()
   local center_c = vim.o.columns / 2
   local center_r = vim.o.lines / 2
-  local x_col = center_c - (width / 2)
-  local y_row = center_r - (height / 2)
+  local x_col = center_c - (self.opts.window_config.width / 2)
+  local y_row = center_r - (self.opts.window_config.height / 2)
   return x_col, y_row
 end
 
@@ -57,7 +55,7 @@ end
 ---@return integer
 ---@return integer
 function Runner:create_window_and_buffer(opts, title_suffix)
-  local col, row = self:get_coordinates(opts.width, opts.height)
+  local col, row = self:get_coordinates()
   local bufnr = vim.api.nvim_create_buf(true, true)
   local title = opts.title_prefix .. title_suffix
   opts = vim.tbl_extend('force', opts, { col = col, row = row, title = title })
@@ -66,13 +64,11 @@ function Runner:create_window_and_buffer(opts, title_suffix)
   return bufnr, win_id
 end
 
-
 ---@param root_node TSNode
 ---@param current_line integer
 ---@return string class_to_test
 function Runner:_get_closest_class(root_node, current_line)
   local classes = {}
-  print(self.lang)
   local query = vim.treesitter.query.parse(self.lang, [[(class_definition name: (identifier) @type)]])
   for _, node in query:iter_captures(root_node, 0, 0, current_line) do
     local current_klass = vim.treesitter.get_node_text(node, 0)
@@ -109,7 +105,7 @@ function Runner:run_closest_class()
   end
   local module_path = self:set_module_path(fp)
   local class_path = module_path .. "." .. class_to_test
-  local command = {self.lang, self.manage_file, "test", class_path }
+  local command = { self.lang, self.manage_file, "test", class_path }
   local bufnr, win_id = self:create_window_and_buffer(self.opts.window_config, class_to_test)
   self:run_command(bufnr, win_id, command)
 end
@@ -122,7 +118,7 @@ function Runner:run_all()
     return
   end
   local module_path = self:set_module_path(fp)
-  local command = {self.lang, self.manage_file, "test", module_path }
+  local command = { self.lang, self.manage_file, "test", module_path }
   local bufnr, win_id = self:create_window_and_buffer(self.opts.window_config, module_path)
   self:run_command(bufnr, win_id, command)
 end
