@@ -1,6 +1,15 @@
 local assert = require("luassert.assert")
 -- local mock = require("luassert.mock")
 local stub = require("luassert.stub")
+local fixtures = require("tests.fixtures")
+
+local function buffer_setup(input, filetype)
+  local bufnr = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_open_win(bufnr, true, { relative = "editor", width = 10, height = 10, row = 0, col = 0 })
+  vim.api.nvim_set_option_value("filetype", filetype, { buf = bufnr })
+  vim.api.nvim_buf_set_lines(bufnr, 0, -1, true, vim.split(input, '\n'))
+  return bufnr
+end
 
 describe("runner class", function()
   local runner = require("pyrun.runner")
@@ -70,5 +79,17 @@ describe("runner class", function()
       style = "minimal"
     }
     assert.stub(open_win_stub).was_called_with(10, true, expected_opts)
+  end)
+  it("returns nil in case parser cannot be created", function()
+    local parser_stub = stub(vim.treesitter, "get_parser")
+    parser_stub.returns(nil)
+    local runner_instance = runner:new(default_opts, config)
+    assert.equals(runner_instance:get_closest_class(), nil)
+  end)
+  it("can find closest class", function()
+    local parser_stub = stub(vim.treesitter, "get_parser")
+    parser_stub.returns(fixtures.get_parser())
+    local runner_instance = runner:new(default_opts, config)
+    runner_instance:get_closest_class()
   end)
 end)
