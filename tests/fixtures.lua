@@ -42,8 +42,12 @@ class TestClassFromLine28(TestCase):
 --- a buffer is needed with content and filetype set
 --- however, treesitter attaches lazily: it needs the buffer to be visible
 --- so a window needs to be opened before the parser is created
---- without the window, getting the parser wouldn't fail,
---- but calling :parse() will raise out of bound error
+--- without the window, get_parser() wouldn't fail,
+--- but calling :parse() would raise out of bound error
+--- @param input string
+--- @param filetype string
+--- @return integer bufnr
+--- @return integer win_id
 function M._setup(input, filetype)
   local bufnr = vim.api.nvim_create_buf(false, true)
   local win_id = vim.api.nvim_open_win(bufnr, true, {
@@ -64,6 +68,7 @@ function M.get_parser_for_ts_node()
   return bufnr, win_id, parser
 end
 
+---@param bufnr integer
 function M.stream_content(bufnr)
   local row_num = vim.api.nvim_buf_line_count(bufnr)
   local buffer_content = vim.api.nvim_buf_get_lines(bufnr, 0, row_num, false)

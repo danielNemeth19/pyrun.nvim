@@ -2,7 +2,7 @@
 ---@field opts pyrun.Opts
 ---@field config pyrun.Config
 ---@field lang string
----@field manage_file string
+--u@field manage_file string
 local Runner = {}
 Runner.__index = Runner
 
