@@ -1,6 +1,8 @@
 M = {}
 
-local pytest = [[
+local lang = "python"
+
+local python_code = [[
 import json
 
 from django.test import TestCase
@@ -8,7 +10,7 @@ from django.http import JsonResponse
 from django.urls import reverse
 
 
-class TestGetUrls(TestCase):
+class TestClassFromLine8(TestCase):
     def test_getting_urls_response_in_json(self):
         response = self.client.get(reverse("get_urls"))
         self.assertEqual(response.status_code, 200)
@@ -19,37 +21,55 @@ class TestGetUrls(TestCase):
         json_data = response.json()
         self.assertEqual(len(json_data.keys()), 10)
 
-class TestOther(TestCase):
-    pass
 
-class TestOther2(TestCase):
-    pass
+class TestClassFromLine20(TestCase):
+    def test_get_urls_returns_correct_url_for_root(self):
+        response = self.client.get(reverse("get_urls"))
+        json_data = response.json()
+        self.assertEqual(json_data["home"], "/")
+        self.assertEqual(json_data["set_csrf"], "/set-csrf/")
+
+
+class TestClassFromLine28(TestCase):
+    def test_get_urls_does_not_include_healthz_itself(self):
+        response = self.client.get(reverse("get_urls"))
+        json_data = response.json()
+        self.assertNotIn("healthz", json_data)
+        self.assertNotIn("urls", json_data)
 ]]
 
-local function buffer_setup(input, filetype)
+--- To create a TS parser:
+--- a buffer is needed with content and filetype set
+--- however, treesitter attaches lazily: it needs the buffer to be visible
+--- so a window needs to be opened before the parser is created
+--- without the window, getting the parser wouldn't fail,
+--- but calling :parse() will raise out of bound error
+function M._setup(input, filetype)
   local bufnr = vim.api.nvim_create_buf(false, true)
-  print(bufnr)
-  print("is valid: ", vim.api.nvim_buf_is_valid(bufnr))
+  local win_id = vim.api.nvim_open_win(bufnr, true, {
+    relative = "editor",
+    width = 10,
+    height = 10,
+    row = 0,
+    col = 0
+  })
   vim.api.nvim_set_option_value("filetype", filetype, { buf = bufnr })
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, true, vim.split(input, '\n'))
-  return bufnr
+  return bufnr, win_id
 end
 
-local function get_lines_from_buffer(bufnr)
+function M.get_parser_for_ts_node()
+  local bufnr, win_id = M._setup(python_code, lang)
+  local parser = vim.treesitter.get_parser(bufnr, lang)
+  return bufnr, win_id, parser
+end
+
+function M.stream_content(bufnr)
   local row_num = vim.api.nvim_buf_line_count(bufnr)
   local buffer_content = vim.api.nvim_buf_get_lines(bufnr, 0, row_num, false)
-  return buffer_content
-end
-
-local test_var = "barmi"
-
-function M.get_parser()
-  local bufnr = buffer_setup(pytest, "python")
-  -- print(bufnr)
-  -- local content = get_lines_from_buffer(bufnr)
-  -- print(content)
-  -- local parser = vim.treesitter.get_parser(bufnr, "python")
-  return bufnr
+  for ix, row in ipairs(buffer_content) do
+    print(ix, "> ", row)
+  end
 end
 
 return M
