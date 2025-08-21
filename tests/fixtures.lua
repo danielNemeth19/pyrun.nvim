@@ -41,9 +41,11 @@ class TestClassFromLine28(TestCase):
 --- To create a TS parser:
 --- a buffer is needed with content and filetype set
 --- however, treesitter attaches lazily: it needs the buffer to be visible
---- so a window needs to be opened before the parser is created
---- without the window, get_parser() wouldn't fail,
---- but calling :parse() would raise out of bound error
+--- so a window needs to be opened before the parser is created.
+--- Without the window, get_parser() wouldn't fail,
+--- but calling :parse() would raise out of bound error.
+--- NOTE: this fixture only needs to provide the buffer and the window,
+--- parser will be created (without mocking) by the source code
 --- @param input string
 --- @param filetype string
 --- @return integer bufnr
@@ -62,10 +64,9 @@ function M._setup(input, filetype)
   return bufnr, win_id
 end
 
-function M.get_parser_for_ts_node()
+function M.setup_opened_buffer()
   local bufnr, win_id = M._setup(python_code, lang)
-  local parser = vim.treesitter.get_parser(bufnr, lang)
-  return bufnr, win_id, parser
+  return bufnr, win_id
 end
 
 ---@param bufnr integer

@@ -115,6 +115,10 @@ The result of the test run is shown in a floating window. To close it, use `q`.
 * providing custom commands
 * improve coloring of test result: right now everything is green ('success')
 * look at stderr buffering - maybe show test result output without buffering?
+* open term in case breakpoint is used in test?
 * lazy loading based on \*test\*.py files
 * Logging, with custom command to open log file
 * metatables for inheritance?
+
+## Issue tracker
+* keymap seems to be "sticky" (stays in effect after leaving python buffer)
