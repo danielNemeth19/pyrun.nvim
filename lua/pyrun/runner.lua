@@ -2,7 +2,7 @@
 ---@field opts pyrun.Opts
 ---@field config pyrun.Config
 ---@field lang string
---u@field manage_file string
+---@field manage_file string
 local Runner = {}
 Runner.__index = Runner
 
@@ -31,7 +31,7 @@ end
 
 ---@param fp string
 ---@return string module_path
-function Runner:set_module_path(fp)
+function Runner:filepath_to_module_name(fp)
   local project_root = vim.fs.dirname(self.manage_file)
   -- to get path of test file relative to project root, without leading "/"
   local relative_path = fp:sub(project_root:len() + 2, fp:len())
@@ -79,7 +79,7 @@ function Runner:_get_closest_class(root_node, current_line)
 end
 
 function Runner:get_closest_class()
-  local parser = vim.treesitter.get_parser(0, self.lang)
+  local parser = vim.treesitter.get_parser(0, nil, {error = false})
   if not parser then
     return
   end
@@ -91,33 +91,39 @@ function Runner:get_closest_class()
   return class_to_test
 end
 
-function Runner:run_closest_class()
+function Runner:get_module_path()
   local fp = vim.api.nvim_buf_get_name(0)
   self:find_manage_file(fp)
   if not self.manage_file then
-    vim.api.nvim_echo({ { "Not a Django project" } }, true, { err = true })
     return
   end
+  local module_path = self:filepath_to_module_name(fp)
+  return module_path
+end
+
+function Runner:run_closest_class()
+  local module_path = self:get_module_path()
   local class_to_test = self:get_closest_class()
   if not class_to_test then
     vim.api.nvim_echo({ { "No test class above cursor" } }, true, { err = true })
     return
   end
-  local module_path = self:set_module_path(fp)
   local class_path = module_path .. "." .. class_to_test
   local command = { self.lang, self.manage_file, "test", class_path }
   local bufnr, win_id = self:create_window_and_buffer(self.opts.window_config, class_to_test)
   self:run_command(bufnr, win_id, command)
 end
 
+function Runner:run_closest_test()
+  print(vim.api.nvim_buf_get_name(0))
+end
+
 function Runner:run_all()
-  local fp = vim.api.nvim_buf_get_name(0)
-  self:find_manage_file(fp)
-  if not self.manage_file then
+  local module_path = self:get_module_path()
+  if not module_path then
     vim.api.nvim_echo({ { "Not a Django project" } }, true, { err = true })
     return
   end
-  local module_path = self:set_module_path(fp)
   local command = { self.lang, self.manage_file, "test", module_path }
   local bufnr, win_id = self:create_window_and_buffer(self.opts.window_config, module_path)
   self:run_command(bufnr, win_id, command)

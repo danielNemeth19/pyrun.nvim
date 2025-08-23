@@ -64,9 +64,14 @@ function M._setup(input, filetype)
   return bufnr, win_id
 end
 
-function M.setup_opened_buffer()
-  local bufnr, win_id = M._setup(python_code, lang)
-  return bufnr, win_id
+---@param opts table|nil
+function M.setup_opened_buffer(opts)
+  opts = opts or {}
+  local code, filetype = python_code, lang
+  if opts.invalid then
+    code, filetype = "", "unsupportedft"
+  end
+  return M._setup(code, filetype)
 end
 
 ---@param bufnr integer

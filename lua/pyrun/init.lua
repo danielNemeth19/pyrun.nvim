@@ -14,6 +14,9 @@ function M.setup(opts)
   vim.keymap.set("n", r.opts.keymaps.run_closest_class, function()
     r:run_closest_class()
   end)
+  vim.keymap.set("n", r.opts.keymaps.run_closest_test, function()
+    r:run_closest_test()
+  end)
 end
 
 return M

@@ -10,6 +10,7 @@
 ---@class pyrun.keymaps
 ---@field run_all string
 ---@field run_closest_class string
+---@field run_closest_test string
 ---@field close_float string
 
 ---@class pyrun.window_config
@@ -43,8 +44,9 @@ local config = {
 
 ---@type pyrun.keymaps
 local keymap_presets = {
-  run_all = "<leader>tt",
-  run_closest_class = "<leader>t",
+  run_all = "<leader>ttt",
+  run_closest_class = "<leader>tt",
+  run_closest_test = "<leader>t",
   close_float = "q"
 }
 

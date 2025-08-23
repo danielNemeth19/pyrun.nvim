@@ -2,23 +2,21 @@ local assert = require("luassert.assert")
 local stub = require("luassert.stub")
 local fixtures = require("tests.fixtures")
 
-describe("Runner handles and creates context", function ()
+describe("Runner can set module path", function()
   local Runner = require("pyrun.runner")
   local default_opts = require("pyrun.config").opts
   local config = require("pyrun.config").config
   local runner = Runner:new(default_opts, config)
   local stubs = {}
 
-  before_each(function ()
+  before_each(function()
     stubs.fs_find = stub(vim.fs, "find")
-    stubs.nvim_create_buf = stub(vim.api, "nvim_create_buf")
-    stubs.nvim_open_win = stub(vim.api, "nvim_open_win")
   end)
-  after_each(function ()
+  after_each(function()
     for _, s in pairs(stubs) do
-     if s and s.revert then
-       s:revert()
-     end
+      if s and s.revert then
+        s:revert()
+      end
     end
   end)
 
@@ -37,18 +35,55 @@ describe("Runner handles and creates context", function ()
     runner:find_manage_file(fp)
     assert.equals(runner.manage_file, nil)
   end)
-  it("can set module path", function()
+  it("can convert filename to module name", function()
     runner.manage_file = "/home/user/project/manage.py"
     local fp = "/home/user/project/apps/app/tests/test_file.py"
-    local module = runner:set_module_path(fp)
+    local module = runner:filepath_to_module_name(fp)
     assert.equals(module, "apps.app.tests.test_file")
   end)
-  it("can set module path for special chars too", function()
+  it("can convert filename to module path for special chars too", function()
     runner.manage_file = "/home/user/my-project/manage.py"
     local fp = "/home/user/my-project/apps/app/tests/test_file.py"
-    local module = runner:set_module_path(fp)
+    local module = runner:filepath_to_module_name(fp)
     assert.equals(module, "apps.app.tests.test_file")
   end)
+  it("can get module path", function()
+    local bufnr, win_id = fixtures.setup_opened_buffer()
+    vim.api.nvim_buf_set_name(bufnr, "/home/user/project/apps/app/tests/test_file.py")
+    stubs.fs_find.returns({ "/home/user/project/manage.py" })
+    local module_path = runner:get_module_path()
+    assert.equals(module_path, "apps.app.tests.test_file")
+    vim.api.nvim_win_close(win_id, true)
+    vim.api.nvim_buf_delete(bufnr, { force = true })
+  end)
+  it("can return none if no manage.py file can be found", function()
+    local bufnr, win_id = fixtures.setup_opened_buffer()
+    vim.api.nvim_buf_set_name(bufnr, "/home/user/project/apps/app/tests/test_file.py")
+    stubs.fs_find.returns({ nil })
+    assert.is_nil(runner:get_module_path())
+    vim.api.nvim_win_close(win_id, true)
+    vim.api.nvim_buf_delete(bufnr, { force = true })
+  end)
+end)
+
+describe("Runner can manage buffer and floating window", function()
+  local Runner = require("pyrun.runner")
+  local default_opts = require("pyrun.config").opts
+  local config = require("pyrun.config").config
+  local stubs = {}
+
+  before_each(function()
+    stubs.nvim_create_buf = stub(vim.api, "nvim_create_buf")
+    stubs.nvim_open_win = stub(vim.api, "nvim_open_win")
+  end)
+  after_each(function()
+    for _, s in pairs(stubs) do
+      if s and s.revert then
+        s:revert()
+      end
+    end
+  end)
+
   it("can calculate top-left coordinate for centered window", function()
     local opts = { window_config = { width = 40, height = 20 } }
     local custom_runner = Runner:new(opts, config)
@@ -86,7 +121,6 @@ describe("Runner can parse class", function()
   local stubs = {}
 
   before_each(function()
-    stubs.get_parser = stub(vim.treesitter, "get_parser")
     stubs.nvim_win_get_cursor = stub(vim.api, "nvim_win_get_cursor")
   end)
   after_each(function()
@@ -98,12 +132,13 @@ describe("Runner can parse class", function()
   end)
 
   it("returns nil in case parser cannot be created", function()
-    stubs.get_parser.returns(nil)
-    assert.equals(runner:get_closest_class(), nil)
+    local bufnr, win_id = fixtures.setup_opened_buffer({ invalid = true })
+    assert.is_nil(runner:get_closest_class())
+    vim.api.nvim_win_close(win_id, true)
+    vim.api.nvim_buf_delete(bufnr, { force = true })
   end)
   it("returns nil if there is no test class above cursor", function()
-    local bufnr, win_id, parser = fixtures.setup_opened_buffer()
-    stubs.get_parser.returns(parser)
+    local bufnr, win_id = fixtures.setup_opened_buffer()
     stubs.nvim_win_get_cursor.returns({ 1, 0 })
     local class_to_run = runner:get_closest_class()
     assert.equals(class_to_run, nil)
@@ -111,8 +146,6 @@ describe("Runner can parse class", function()
     vim.api.nvim_buf_delete(bufnr, { force = true })
   end)
   it("can find closest class", function()
-    stubs.get_parser:revert()
-
     local bufnr, win_id = fixtures.setup_opened_buffer()
     local expected_classes = {
       { line = 8,  name = "TestClassFromLine8" },

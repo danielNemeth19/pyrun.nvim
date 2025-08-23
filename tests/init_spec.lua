@@ -2,7 +2,7 @@ local assert = require("luassert.assert")
 
 describe("pyrun-init", function()
   local plugin = require("pyrun")
-  local runner = require("pyrun.runner")
+  local Runner = require("pyrun.runner")
   ---@type pyrun.Opts
   local called_opts
   ---@type pyrun.Config
@@ -10,15 +10,15 @@ describe("pyrun-init", function()
   local orig_new
 
   before_each(function()
-    orig_new = runner.new
-    runner.new = function(self, opts, config)
+    orig_new = Runner.new
+    Runner.new = function(self, opts, config)
       called_opts = opts
       called_config = config
       return orig_new(self, opts, config)
     end
   end)
   after_each(function()
-    runner.new = orig_new
+    Runner.new = orig_new
   end)
   it("can require", function()
     require("pyrun")
