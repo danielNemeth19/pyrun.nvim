@@ -40,6 +40,16 @@ function Runner:filepath_to_module_name(fp)
   return module_path
 end
 
+function Runner:get_module_path()
+  local fp = vim.api.nvim_buf_get_name(0)
+  self:find_manage_file(fp)
+  if not self.manage_file then
+    return
+  end
+  local module_path = self:filepath_to_module_name(fp)
+  return module_path
+end
+
 ---@return integer x_col
 ---@return integer y_row
 function Runner:get_coordinates()
@@ -69,7 +79,7 @@ end
 ---@return string class_to_test
 function Runner:_get_closest_class(root_node, current_line)
   local classes = {}
-  local query = vim.treesitter.query.parse(self.lang, [[(class_definition name: (identifier) @type)]])
+  local query = vim.treesitter.query.parse(self.lang, "(class_definition name: (identifier) @type)")
   for _, node in query:iter_captures(root_node, 0, 0, current_line) do
     local current_klass = vim.treesitter.get_node_text(node, 0)
     table.insert(classes, current_klass)
@@ -79,7 +89,7 @@ function Runner:_get_closest_class(root_node, current_line)
 end
 
 function Runner:get_closest_class()
-  local parser = vim.treesitter.get_parser(0, nil, {error = false})
+  local parser = vim.treesitter.get_parser(0, nil, { error = false })
   if not parser then
     return
   end
@@ -89,16 +99,6 @@ function Runner:get_closest_class()
   local line, _ = pos[1], pos[2]
   local class_to_test = self:_get_closest_class(root, line)
   return class_to_test
-end
-
-function Runner:get_module_path()
-  local fp = vim.api.nvim_buf_get_name(0)
-  self:find_manage_file(fp)
-  if not self.manage_file then
-    return
-  end
-  local module_path = self:filepath_to_module_name(fp)
-  return module_path
 end
 
 function Runner:run_closest_class()
@@ -115,7 +115,22 @@ function Runner:run_closest_class()
 end
 
 function Runner:run_closest_test()
-  print(vim.api.nvim_buf_get_name(0))
+  local parser = vim.treesitter.get_parser(0, nil, { error = false })
+  if not parser then
+    return
+  end
+  local tree = parser:parse()[1]
+  local root = tree:root()
+  local pos = vim.api.nvim_win_get_cursor(0)
+  local line, _ = pos[1], pos[2]
+  local tests = {}
+  local query = vim.treesitter.query.parse(self.lang, "(function_definition name: (identifier) @test)")
+  for _, node in query:iter_captures(root, 0, 0, line) do
+    local current_test = vim.treesitter.get_node_text(node, 0)
+    table.insert(tests, current_test)
+  end
+  local test_to_run = tests[#tests]
+  return test_to_run
 end
 
 function Runner:run_all()
