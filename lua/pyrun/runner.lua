@@ -76,19 +76,27 @@ end
 
 ---@param root_node TSNode
 ---@param current_line integer
----@return string class_to_test
-function Runner:_get_closest_class(root_node, current_line)
-  local classes = {}
-  local query = vim.treesitter.query.parse(self.lang, "(class_definition name: (identifier) @type)")
+---@param target "class" | "test"
+---@return string closest_target
+function Runner:_get_closest_target(root_node, current_line, target)
+  local targets = {}
+  local query_string = ""
+  if target == "class" then
+    query_string =  "(class_definition name: (identifier) @type)"
+  elseif target == "test" then
+    query_string = "(function_definition name: (identifier) @type)"
+  end
+  local query = vim.treesitter.query.parse(self.lang, query_string)
   for _, node in query:iter_captures(root_node, 0, 0, current_line) do
     local current_klass = vim.treesitter.get_node_text(node, 0)
-    table.insert(classes, current_klass)
+    table.insert(targets, current_klass)
   end
-  local class_to_test = classes[#classes]
-  return class_to_test
+  local closest_target = targets[#targets]
+  return closest_target
 end
 
-function Runner:get_closest_class()
+---@param target "class" | "test"
+function Runner:get_closest_target(target)
   local parser = vim.treesitter.get_parser(0, nil, { error = false })
   if not parser then
     return
@@ -97,40 +105,40 @@ function Runner:get_closest_class()
   local root = tree:root()
   local pos = vim.api.nvim_win_get_cursor(0)
   local line, _ = pos[1], pos[2]
-  local class_to_test = self:_get_closest_class(root, line)
-  return class_to_test
+  local closest_target = self:_get_closest_target(root, line, target)
+  return closest_target
 end
 
 function Runner:run_closest_class()
   local module_path = self:get_module_path()
-  local class_to_test = self:get_closest_class()
-  if not class_to_test then
+  local class_to_run = self:get_closest_target("class")
+  if not class_to_run then
     vim.api.nvim_echo({ { "No test class above cursor" } }, true, { err = true })
     return
   end
-  local class_path = module_path .. "." .. class_to_test
+  local class_path = module_path .. "." .. class_to_run
   local command = { self.lang, self.manage_file, "test", class_path }
-  local bufnr, win_id = self:create_window_and_buffer(self.opts.window_config, class_to_test)
+  local bufnr, win_id = self:create_window_and_buffer(self.opts.window_config, class_to_run)
   self:run_command(bufnr, win_id, command)
 end
 
 function Runner:run_closest_test()
-  local parser = vim.treesitter.get_parser(0, nil, { error = false })
-  if not parser then
+  local module_path = self:get_module_path()
+  local class_to_run = self:get_closest_target("class")
+  if not class_to_run then
+    vim.api.nvim_echo({ { "No test class above cursor" } }, true, { err = true })
     return
   end
-  local tree = parser:parse()[1]
-  local root = tree:root()
-  local pos = vim.api.nvim_win_get_cursor(0)
-  local line, _ = pos[1], pos[2]
-  local tests = {}
-  local query = vim.treesitter.query.parse(self.lang, "(function_definition name: (identifier) @test)")
-  for _, node in query:iter_captures(root, 0, 0, line) do
-    local current_test = vim.treesitter.get_node_text(node, 0)
-    table.insert(tests, current_test)
+  local test_to_run = self:get_closest_target("test")
+  if not test_to_run then
+    vim.api.nvim_echo({ { "No test above cursor" } }, true, { err = true })
+    return
   end
-  local test_to_run = tests[#tests]
-  return test_to_run
+  local test_path = module_path .. "." .. class_to_run .. "." .. test_to_run
+  local window_title = class_to_run .. "." .. test_to_run
+  local command = { self.lang, self.manage_file, "test", test_path }
+  local bufnr, win_id = self:create_window_and_buffer(self.opts.window_config, window_title)
+  self:run_command(bufnr, win_id, command)
 end
 
 function Runner:run_all()
