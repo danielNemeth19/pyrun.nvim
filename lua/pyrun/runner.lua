@@ -88,8 +88,8 @@ function Runner:_get_closest_target(root_node, current_line, target)
   end
   local query = vim.treesitter.query.parse(self.lang, query_string)
   for _, node in query:iter_captures(root_node, 0, 0, current_line) do
-    local current_klass = vim.treesitter.get_node_text(node, 0)
-    table.insert(targets, current_klass)
+    local current_target = vim.treesitter.get_node_text(node, 0)
+    table.insert(targets, current_target)
   end
   local closest_target = targets[#targets]
   return closest_target

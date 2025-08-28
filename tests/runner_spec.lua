@@ -113,7 +113,7 @@ describe("Runner can manage buffer and floating window", function()
   end)
 end)
 
-describe("Runner can parse class", function()
+describe("Runner can find closest target", function()
   local Runner = require("pyrun.runner")
   local default_opts = require("pyrun.config").opts
   local config = require("pyrun.config").config
@@ -163,9 +163,15 @@ describe("Runner can parse class", function()
   end)
   it("can find closest test", function ()
     local bufnr, win_id = fixtures.setup_opened_buffer()
-    stubs.nvim_win_get_cursor.returns({ 11, 11 })
-    local test_to_run = runner:get_closest_target("test")
-    print("test to run: ", test_to_run)
+    local expected_tests = {
+      { line = 9,  name = "test_getting_urls_response_in_json" },
+      { line = 14, name = "test_get_urls_returns_all_urls" },
+    }
+    for _, test_info in pairs(expected_tests) do
+      stubs.nvim_win_get_cursor.returns({test_info.line + 1, 1})
+      local test_to_run = runner:get_closest_target("test")
+      assert.equals(test_info.name, test_to_run)
+    end
     vim.api.nvim_win_close(win_id, true)
     vim.api.nvim_buf_delete(bufnr, { force = true })
   end)

@@ -15,6 +15,7 @@ A plugin to run the unittests of the current buffer, at any granularity.
 Currently, the plugin only supports Django projects. It is capable to run:
 * all tests found in the current buffer
 * all tests of the 'closest' test class - this is decided based on the cursor position. In this mode, plugin runs all tests in the parent class under the cursor.
+* single test, under the cursor.
 
 The output of the test run is presented in a floating window, centered in the middle of the screen.
 
@@ -98,11 +99,12 @@ return {
 ```
 
 ## Default Mappings:
-| Insert  | Normal     | Action                               |
-| ------- | ---------- | -------------------------------------|
-|   -     |`<leader>tt`| Runs all tests in file               |
-|   -     |`<leader>t` | Runs all tests of parent test class* |
-|   -     |`q`         | Closes results window                |
+| Insert  | Normal      | Action                               |
+| ------- | ----------  | -------------------------------------|
+|   -     |`<leader>ttt`| Runs all tests in file               |
+|   -     |`<leader>tt` | Runs all tests of parent test class* |
+|   -     |`<leader>t`  | Runs test under the cursor           |
+|   -     |`q`          | Closes results window                |
 
 The result of the test run is shown in a floating window. To close it, use `q`. 
 
@@ -110,8 +112,9 @@ The result of the test run is shown in a floating window. To close it, use `q`.
 
 ## TODO:
 * implement running closest test class - done
-* implement running closest test case
-* investigate treesitter playground for `def` and `class` targeting - done for `class`, on track for `def`
+* implement running closest test case - done
+* adds test class and test case validation
+* investigate treesitter playground for `def` and `class` targeting - done
 * providing custom commands
 * improve coloring of test result: right now everything is green ('success')
 * look at stderr buffering - maybe show test result output without buffering?
