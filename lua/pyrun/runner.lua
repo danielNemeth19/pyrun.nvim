@@ -82,7 +82,7 @@ function Runner:_get_closest_target(root_node, current_line, target)
   local targets = {}
   local query_string = ""
   if target == "class" then
-    query_string =  "(class_definition name: (identifier) @type)"
+    query_string = "(class_definition name: (identifier) @type)"
   elseif target == "test" then
     query_string = "(function_definition name: (identifier) @type)"
   end
@@ -112,7 +112,7 @@ end
 function Runner:run_closest_class()
   local module_path = self:get_module_path()
   local class_to_run = self:get_closest_target("class")
-  if not class_to_run then
+  if not class_to_run or class_to_run:sub(1, 4) ~= "Test" then
     vim.api.nvim_echo({ { "No test class above cursor" } }, true, { err = true })
     return
   end
@@ -123,12 +123,14 @@ function Runner:run_closest_class()
 end
 
 function Runner:run_closest_test()
+  print("HERE")
   local module_path = self:get_module_path()
   local class_to_run = self:get_closest_target("class")
   if not class_to_run then
     vim.api.nvim_echo({ { "No test class above cursor" } }, true, { err = true })
     return
   end
+  print("heeeereeee", class_to_run)
   local test_to_run = self:get_closest_target("test")
   if not test_to_run then
     vim.api.nvim_echo({ { "No test above cursor" } }, true, { err = true })

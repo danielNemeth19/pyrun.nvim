@@ -26,16 +26,32 @@ class TestClassFromLine20(TestCase):
     def test_get_urls_returns_correct_url_for_root(self):
         response = self.client.get(reverse("get_urls"))
         json_data = response.json()
-        self.assertEqual(json_data["home"], "/")
-        self.assertEqual(json_data["set_csrf"], "/set-csrf/")
+        expected_urls = self._get_urls()
+        self.assertEqual(json_data["home"], expected_urls["home"])
+        self.assertEqual(json_data["set_csrf"], expected_urls["set_csrf"])
+
+    @staticmethod
+    def _get_urls():
+        return {
+            "home": "/",
+            "set_csrf": "/set-csrf"
+        }
 
 
-class TestClassFromLine28(TestCase):
+class TestClassFromLine36(TestCase):
     def test_get_urls_does_not_include_healthz_itself(self):
         response = self.client.get(reverse("get_urls"))
         json_data = response.json()
         self.assertNotIn("healthz", json_data)
         self.assertNotIn("urls", json_data)
+
+
+class AbstractTestClassFromLine44(TestCase):
+    def setUp(self):
+        self.subclass_supposed_to_set = None
+
+    def test_abstract(self):
+        self.assertEqual(self.subclass_supposed_to_set, "something")
 ]]
 
 --- To create a TS parser:

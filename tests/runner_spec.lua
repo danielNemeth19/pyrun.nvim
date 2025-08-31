@@ -145,12 +145,20 @@ describe("Runner can find closest target", function()
     vim.api.nvim_win_close(win_id, true)
     vim.api.nvim_buf_delete(bufnr, { force = true })
   end)
+  it("returns nil class found in not a test class", function()
+    local bufnr, win_id = fixtures.setup_opened_buffer()
+    stubs.nvim_win_get_cursor.returns({ 46, 11 })
+    local class_to_run = runner:get_closest_target("class")
+    assert.equals(class_to_run, "AbstractTestClassFromLine44")
+    vim.api.nvim_win_close(win_id, true)
+    vim.api.nvim_buf_delete(bufnr, { force = true })
+  end)
   it("can find closest class", function()
     local bufnr, win_id = fixtures.setup_opened_buffer()
     local expected_classes = {
       { line = 8,  name = "TestClassFromLine8" },
       { line = 20, name = "TestClassFromLine20" },
-      { line = 28, name = "TestClassFromLine28" }
+      { line = 36, name = "TestClassFromLine36" }
     }
 
     for _, class_info in pairs(expected_classes) do
@@ -165,7 +173,7 @@ describe("Runner can find closest target", function()
     local bufnr, win_id = fixtures.setup_opened_buffer()
     local expected_tests = {
       { line = 9,  name = "test_getting_urls_response_in_json" },
-      { line = 14, name = "test_get_urls_returns_all_urls" },
+      { line = 14, name = "test_get_urls_returns_all_urls" }
     }
     for _, test_info in pairs(expected_tests) do
       stubs.nvim_win_get_cursor.returns({test_info.line + 1, 1})
@@ -216,6 +224,29 @@ describe("Runner can run tests", function()
     assert.is_nil(runner:run_closest_class())
     assert.stub(stubs.nvim_echo).was_called_with({ { "No test class above cursor" } }, true, { err = true })
   end)
+  it("can log message if class found is not a test class", function()
+    stubs.get_module_path.returns(nil)
+    stubs.get_closest_target.returns("AbstractTestClass")
+    assert.is_nil(runner:run_closest_class())
+    assert.stub(stubs.nvim_echo).was_called_with({ { "No test class above cursor" } }, true, { err = true })
+  end)
+  it("can run closest test", function()
+    stubs.get_module_path.returns("apps.app.tests.test_file")
+    stubs.get_closest_target.on_call_with("class").returns("TestClasstoRun")
+    stubs.get_closest_target.on_call_with("test").returns("test_function")
+    -- runner.manage_file = "/home/user/project/manage.py"
+    -- stubs.create_window_and_buffer.returns(1, 20)
+    runner:run_closest_test()
+    -- local expected_command = "sdfsfs"
+    -- local call_args = stubs.run_command.calls[1].vals
+    -- assert.are.same(1, call_args[2])
+    -- assert.are.same(20, call_args[3])
+    -- assert.are.same(expected_command, call_args[4])
+  end)
+
+
+
+
   it("can run all tests", function()
     stubs.get_module_path.returns("apps.app.tests.test_file")
     runner.manage_file = "/home/user/project/manage.py"
