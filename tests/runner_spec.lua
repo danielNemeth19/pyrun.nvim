@@ -169,14 +169,14 @@ describe("Runner can find closest target", function()
     vim.api.nvim_win_close(win_id, true)
     vim.api.nvim_buf_delete(bufnr, { force = true })
   end)
-  it("can find closest test", function ()
+  it("can find closest test", function()
     local bufnr, win_id = fixtures.setup_opened_buffer()
     local expected_tests = {
       { line = 9,  name = "test_getting_urls_response_in_json" },
       { line = 14, name = "test_get_urls_returns_all_urls" }
     }
     for _, test_info in pairs(expected_tests) do
-      stubs.nvim_win_get_cursor.returns({test_info.line + 1, 1})
+      stubs.nvim_win_get_cursor.returns({ test_info.line + 1, 1 })
       local test_to_run = runner:get_closest_target("test")
       assert.equals(test_info.name, test_to_run)
     end
@@ -189,10 +189,11 @@ describe("Runner can run tests", function()
   local Runner = require("pyrun.runner")
   local default_opts = require("pyrun.config").opts
   local config = require("pyrun.config").config
-  local runner = Runner:new(default_opts, config)
+  local runner
   local stubs = {}
 
   before_each(function()
+    runner = Runner:new(default_opts, config)
     stubs.get_module_path = stub(runner, "get_module_path")
     stubs.create_window_and_buffer = stub(runner, "create_window_and_buffer")
     stubs.run_command = stub(runner, "run_command")
@@ -206,13 +207,18 @@ describe("Runner can run tests", function()
       end
     end
   end)
-  it("can run closest class", function ()
+  it("can run closest class", function()
     stubs.get_module_path.returns("apps.app.tests.test_file")
     stubs.get_closest_target.returns("TestClasstoRun")
     runner.manage_file = "/home/user/project/manage.py"
     stubs.create_window_and_buffer.returns(1, 20)
     runner:run_closest_class()
-    local expected_command = { "python", "/home/user/project/manage.py", "test", "apps.app.tests.test_file.TestClasstoRun" }
+    local expected_command = {
+      "python",
+      "/home/user/project/manage.py",
+      "test",
+      "apps.app.tests.test_file.TestClasstoRun"
+    }
     local call_args = stubs.run_command.calls[1].vals
     assert.are.same(1, call_args[2])
     assert.are.same(20, call_args[3])
@@ -232,21 +238,47 @@ describe("Runner can run tests", function()
   end)
   it("can run closest test", function()
     stubs.get_module_path.returns("apps.app.tests.test_file")
-    stubs.get_closest_target.on_call_with("class").returns("TestClasstoRun")
-    stubs.get_closest_target.on_call_with("test").returns("test_function")
-    -- runner.manage_file = "/home/user/project/manage.py"
-    -- stubs.create_window_and_buffer.returns(1, 20)
+    stubs.get_closest_target.invokes(function(_, arg)
+      if arg == "class" then
+        return "TestClasstoRun"
+      end
+      if arg == "test" then
+        return "test_function"
+      end
+    end)
+    runner.manage_file = "/home/user/project/manage.py"
+    stubs.create_window_and_buffer.returns(1, 20)
     runner:run_closest_test()
-    -- local expected_command = "sdfsfs"
-    -- local call_args = stubs.run_command.calls[1].vals
-    -- assert.are.same(1, call_args[2])
-    -- assert.are.same(20, call_args[3])
-    -- assert.are.same(expected_command, call_args[4])
+    local expected_command = {
+      "python",
+      "/home/user/project/manage.py",
+      "test",
+      "apps.app.tests.test_file.TestClasstoRun.test_function"
+    }
+    local call_args = stubs.run_command.calls[1].vals
+    assert.are.same(1, call_args[2])
+    assert.are.same(20, call_args[3])
+    assert.are.same(expected_command, call_args[4])
   end)
-
-
-
-
+  it("can log message if no test class above test", function()
+    stubs.get_module_path.returns(nil)
+    stubs.get_closest_target.returns("AbstractTestClass")
+    assert.is_nil(runner:run_closest_test())
+    assert.stub(stubs.nvim_echo).was_called_with({ { "No test class above cursor" } }, true, { err = true })
+  end)
+  it("can log message if no method is not a unittest", function()
+    stubs.get_module_path.returns(nil)
+    stubs.get_closest_target.invokes(function(_, arg)
+      if arg == "class" then
+        return "TestClasstoRun"
+      end
+      if arg == "test" then
+        return "_helper_method"
+      end
+    end)
+    assert.is_nil(runner:run_closest_test())
+    assert.stub(stubs.nvim_echo).was_called_with({ { "Method is not a unittest" } }, true, { err = true })
+  end)
   it("can run all tests", function()
     stubs.get_module_path.returns("apps.app.tests.test_file")
     runner.manage_file = "/home/user/project/manage.py"
