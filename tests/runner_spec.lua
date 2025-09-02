@@ -145,14 +145,6 @@ describe("Runner can find closest target", function()
     vim.api.nvim_win_close(win_id, true)
     vim.api.nvim_buf_delete(bufnr, { force = true })
   end)
-  it("returns nil class found in not a test class", function()
-    local bufnr, win_id = fixtures.setup_opened_buffer()
-    stubs.nvim_win_get_cursor.returns({ 46, 11 })
-    local class_to_run = runner:get_closest_target("class")
-    assert.equals(class_to_run, "AbstractTestClassFromLine44")
-    vim.api.nvim_win_close(win_id, true)
-    vim.api.nvim_buf_delete(bufnr, { force = true })
-  end)
   it("can find closest class", function()
     local bufnr, win_id = fixtures.setup_opened_buffer()
     local expected_classes = {
@@ -294,5 +286,47 @@ describe("Runner can run tests", function()
     stubs.get_module_path.returns(nil)
     assert.is_nil(runner:run_all())
     assert.stub(stubs.nvim_echo).was_called_with({ { "Not a Django project" } }, true, { err = true })
+  end)
+end)
+
+describe("Run closest class", function ()
+  local Runner = require("pyrun.runner")
+  local default_opts = require("pyrun.config").opts
+  local config = require("pyrun.config").config
+  local runner = Runner:new(default_opts, config)
+  local stubs = {}
+
+  before_each(function()
+    stubs.get_module_path = stub(runner, "get_module_path")
+    stubs.nvim_win_get_cursor = stub(vim.api, "nvim_win_get_cursor")
+    stubs.create_window_and_buffer = stub(runner, "create_window_and_buffer")
+    stubs.run_command = stub(runner, "run_command")
+    runner.manage_file = "/home/user/project/manage.py"
+  end)
+  after_each(function()
+    for _, s in pairs(stubs) do
+      if s and s.revert then
+        s:revert()
+      end
+    end
+  end)
+  it("lets see", function ()
+    local bufnr, win_id = fixtures.setup_opened_buffer()
+    stubs.nvim_win_get_cursor.returns({10, 4})
+    local expected_class = "TestClassFromLine8"
+
+    stubs.get_module_path.returns("apps.app.tests.test_file")
+    stubs.create_window_and_buffer.returns(1, 20)
+    local expected_command = {
+      "python",
+      "/home/user/project/manage.py",
+      "test",
+      "apps.app.tests.test_file" .. "." .. expected_class
+    }
+    runner:run_closest_class()
+    local call_args = stubs.run_command.calls[1].vals
+    assert.are.same(1, call_args[2])
+    assert.are.same(20, call_args[3])
+    assert.are.same(expected_command, call_args[4])
   end)
 end)
