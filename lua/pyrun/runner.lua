@@ -131,7 +131,7 @@ function Runner:run_closest_test()
   end
   local test_to_run = self:get_closest_target("test")
   if not test_to_run or test_to_run:sub(1, 5) ~= "test_" then
-    vim.api.nvim_echo({ { "Method is not a unittest" } }, true, { err = true })
+    vim.api.nvim_echo({ { "Target is not a unittest" } }, true, { err = true })
     return
   end
   local test_path = module_path .. "." .. class_to_run .. "." .. test_to_run
