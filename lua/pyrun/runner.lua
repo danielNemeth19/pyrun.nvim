@@ -156,27 +156,46 @@ end
 ---@param win_id integer
 ---@param command table
 function Runner:run_command(bufnr, win_id, command)
+  local start_capture = false
+  local test_result = ""
   vim.fn.jobstart(command, {
     on_stdout = function(_, data)
-      vim.api.nvim_buf_set_lines(bufnr, -1, -1, false, data)
+      -- vim.api.nvim_buf_set_lines(bufnr, -1, -1, false, data)
     end,
     on_stderr = function(_, data)
-      vim.api.nvim_buf_set_lines(bufnr, -1, -1, false, data)
-      local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
-      for line, row in ipairs(lines) do
-        local first_char = string.sub(row, 1, 1)
-        if first_char == "." then
-          vim.hl.range(
-            bufnr,
-            self.config.ns_id,
-            self.config.color_names.success,
-            { line - 1, 0 }, { line - 1, -1 },
-            { inclusive = true }
-          )
+      print(start_capture)
+      -- vim.api.nvim_buf_set_lines(bufnr, -1, -1, false, {tostring(start_capture)})
+      for i, text in ipairs(data) do
+        if not start_capture and i == 1 and text == "" then
+          start_capture = true
+          print("first case", i,text, start_capture )
+          vim.api.nvim_buf_set_lines(bufnr, -1, -1, false, {tostring(start_capture)})
+        -- elseif start_capture and i == 1 and text == "." then
+          -- test_result = test_result .. "."
+          -- vim.api.nvim_buf_set_lines(bufnr, -1, -1, false, {test_result})
+          -- print("second case", i, text, start_capture, test_result )
+        -- elseif start_capture and i == 1 and text == "" then
+          -- vim.api.nvim_buf_set_lines(bufnr, -1, -1, false, data)
+          -- start_capture = false
         end
       end
+      -- vim.api.nvim_buf_set_lines(bufnr, -1, -1, false, data)
+      -- local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
+      -- for line, row in ipairs(lines) do
+        -- local first_char = string.sub(row, 1, 1)
+        -- if first_char == "." then
+          -- vim.hl.range(
+            -- bufnr,
+            -- self.config.ns_id,
+            -- self.config.color_names.success,
+            -- { line - 1, 0 }, { line - 1, -1 },
+            -- { inclusive = true }
+          -- )
+        -- end
+      -- end
     end,
-    stderr_buffered = true,
+    -- stdout_buffered = false,
+    -- stderr_buffered = false,
     on_exit = function()
       vim.keymap.set("n", self.opts.keymaps.close_float, function()
         vim.api.nvim_win_close(win_id, false)
