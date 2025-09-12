@@ -158,7 +158,6 @@ end
 function Runner:run_command(bufnr, win_id, command)
   vim.fn.jobstart(command, {
     on_stdout = function(_, data)
-      vim.print("stdout",data)
       vim.api.nvim_buf_set_lines(bufnr, -1, -1, false, data)
     end,
     on_stderr = function(_, data)
