@@ -158,14 +158,15 @@ end
 function Runner:run_command(bufnr, win_id, command)
   vim.fn.jobstart(command, {
     on_stdout = function(_, data)
+      print(string.format("Table data: %s", vim.inspect(data)))
       vim.api.nvim_buf_set_lines(bufnr, -1, -1, false, data)
     end,
     on_stderr = function(_, data)
       for i, text in ipairs(data) do
-        if i == 1 and text == "." then
+        if i == 1 and text == "." or text == "F" then
           self:append_line(bufnr, text)
         else
-          vim.api.nvim_buf_set_lines(bufnr, -1, -1, false, {text})
+          vim.api.nvim_buf_set_lines(bufnr, -1, -1, false, { text })
         end
       end
     end,
@@ -178,13 +179,21 @@ function Runner:run_command(bufnr, win_id, command)
   })
 end
 
-function Runner:append_line(bufnr, dot)
+function Runner:append_line(bufnr, test_char)
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   if #lines == 0 then
     lines = { "" }
   end
-  lines[#lines] = lines[#lines] .. dot
+  lines[#lines] = lines[#lines] .. test_char
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
+  local s_row, s_col = #lines, lines[#lines]:len()
+  print(s_row, s_col)
+  vim.hl.range(bufnr,
+    self.config.ns_id,
+    self.config.color_names.success,
+    { s_row, s_col -1 }, { s_row, s_col + 1 },
+    { inclusive = false }
+  )
 end
 
 return Runner

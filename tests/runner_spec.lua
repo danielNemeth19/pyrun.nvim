@@ -301,7 +301,22 @@ describe("appending lines", function()
     end
     vim.api.nvim_buf_set_lines(bufnr, -1, -1, false, { "Run 5 tests" })
     local test_result = vim.api.nvim_buf_get_lines(bufnr, 2, 3, false)
-    fixtures.stream_content(bufnr)
     assert.are.same(test_result, {"....."})
+    vim.api.nvim_buf_delete(bufnr, { force = true })
+  end)
+  it("can add failure chars without endlines", function()
+    local bufnr = vim.api.nvim_create_buf(false, true)
+    local current_lines = {
+      "Creating test database", "Found 5 test(s).", ""
+    }
+    vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, current_lines)
+    runner:append_line(bufnr, ".")
+    runner:append_line(bufnr, "F")
+    runner:append_line(bufnr, ".")
+
+    vim.api.nvim_buf_set_lines(bufnr, -1, -1, false, { "Run 5 tests" })
+    local test_result = vim.api.nvim_buf_get_lines(bufnr, 2, 3, false)
+    assert.are.same(test_result, {".F."})
+    vim.api.nvim_buf_delete(bufnr, { force = true })
   end)
 end)
