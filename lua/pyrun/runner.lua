@@ -191,14 +191,18 @@ function Runner:append_line(bufnr, test_char)
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
   local s_row = #lines - 1
   local s_col = lines[#lines]:len() - 1
-  self.hl_map[s_col] = test_char
-  local start_r = self.hl_map[0]
-  for i, r in ipairs(self.hl_map) do
-    print("test", i, r)
-    if r ~= start_r then
-      print("are we here?")
-      vim.hl.range(bufnr, self.config.ns_id, self.config.color_names.success, {s_row, 0}, {s_row, i})
-    end
+  local color = (test_char == ".") and self.config.color_names.success or self.config.color_names.failure
+  if #self.hl_map == 0 then
+    table.insert(self.hl_map, { start_pos = s_col, end_pos = s_col + 1, color = color })
+  end
+  local prev_command = self.hl_map[#self.hl_map]
+  if color == prev_command.color then
+    prev_command.end_pos = s_col + 1
+  else
+    table.insert(self.hl_map, { start_pos = prev_command.end_pos, end_pos = s_col + 1, color = color })
+  end
+  for _, v in ipairs(self.hl_map) do
+    vim.hl.range(bufnr, self.config.ns_id, v.color, {s_row, v.start_pos}, {s_row, v.end_pos})
   end
 end
 
