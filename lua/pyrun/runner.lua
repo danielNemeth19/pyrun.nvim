@@ -167,7 +167,7 @@ function Runner:run_command(bufnr, win_id, command)
     on_stderr = function(_, data)
       for i, text in ipairs(data) do
         if i == 1 and text == "." or text == "F" then
-          self:append_line(bufnr, text)
+          self:append_and_hl_char(bufnr, text)
         else
           vim.api.nvim_buf_set_lines(bufnr, -1, -1, false, { text })
         end
@@ -177,12 +177,13 @@ function Runner:run_command(bufnr, win_id, command)
     on_exit = function()
       vim.keymap.set("n", self.opts.keymaps.close_float, function()
         vim.api.nvim_win_close(win_id, false)
+        self.hl_map = {}
       end, { buffer = bufnr })
     end
   })
 end
 
-function Runner:append_line(bufnr, test_char)
+function Runner:append_and_hl_char(bufnr, test_char)
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   if #lines == 0 then
     lines = { "" }
@@ -193,16 +194,19 @@ function Runner:append_line(bufnr, test_char)
   local s_col = lines[#lines]:len() - 1
   local color = (test_char == ".") and self.config.color_names.success or self.config.color_names.failure
   if #self.hl_map == 0 then
-    table.insert(self.hl_map, { start_pos = s_col, end_pos = s_col + 1, color = color })
-  end
-  local prev_command = self.hl_map[#self.hl_map]
-  if color == prev_command.color then
-    prev_command.end_pos = s_col + 1
+    local inital_hl_range = { start_pos = s_col, end_pos = s_col + 1, color = color }
+    table.insert(self.hl_map, inital_hl_range)
   else
-    table.insert(self.hl_map, { start_pos = prev_command.end_pos, end_pos = s_col + 1, color = color })
+    local prev_command = self.hl_map[#self.hl_map]
+    if color == prev_command.color then
+      prev_command.end_pos = s_col + 1
+    else
+      local new_hl_range = { start_pos = prev_command.end_pos, end_pos = s_col + 1, color = color }
+      table.insert(self.hl_map, new_hl_range)
+    end
   end
-  for _, v in ipairs(self.hl_map) do
-    vim.hl.range(bufnr, self.config.ns_id, v.color, {s_row, v.start_pos}, {s_row, v.end_pos})
+  for _, hl_range in ipairs(self.hl_map) do
+    vim.hl.range(bufnr, self.config.ns_id, hl_range.color, { s_row, hl_range.start_pos }, { s_row, hl_range.end_pos })
   end
 end
 

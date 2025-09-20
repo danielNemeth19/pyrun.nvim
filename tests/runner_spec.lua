@@ -288,6 +288,8 @@ describe("appending lines", function()
   local Runner = require("pyrun.runner")
   local default_opts = require("pyrun.config").opts
   local config = require("pyrun.config").config
+  local success_color = config.color_names.success
+  local failure_color = config.color_names.failure
 
   it("can add test result chars without endlines", function()
     local runner = Runner:new(default_opts, config)
@@ -297,7 +299,7 @@ describe("appending lines", function()
     }
     vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, current_lines)
     for _ = 1, 5 do
-      runner:append_line(bufnr, ".")
+      runner:append_and_hl_char(bufnr, ".")
     end
     vim.api.nvim_buf_set_lines(bufnr, -1, -1, false, { "Run 5 tests" })
     local test_result = vim.api.nvim_buf_get_lines(bufnr, 2, 3, false)
@@ -311,14 +313,36 @@ describe("appending lines", function()
       "Creating test database", "Found 3 test(s).", ""
     }
     vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, current_lines)
-    runner:append_line(bufnr, ".")
-    runner:append_line(bufnr, ".")
-    runner:append_line(bufnr, "F")
-    runner:append_line(bufnr, ".")
+    runner:append_and_hl_char(bufnr, "F")
+    runner:append_and_hl_char(bufnr, ".")
+    runner:append_and_hl_char(bufnr, "F")
+    runner:append_and_hl_char(bufnr, ".")
 
-    vim.api.nvim_buf_set_lines(bufnr, -1, -1, false, { "Run 3 tests" })
+    vim.api.nvim_buf_set_lines(bufnr, -1, -1, false, { "Run 4 tests" })
     local test_result = vim.api.nvim_buf_get_lines(bufnr, 2, 3, false)
-    assert.are.same(test_result, {"..F."})
+    assert.are.same(test_result, {"F.F."})
+    vim.api.nvim_buf_delete(bufnr, { force = true })
+  end)
+  it("can update highlight groups based on test results", function()
+    local runner = Runner:new(default_opts, config)
+    local bufnr = vim.api.nvim_create_buf(false, true)
+    local current_lines = {
+      "Creating test database", "Found 3 test(s).", ""
+    }
+    vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, current_lines)
+    runner:append_and_hl_char(bufnr, ".")
+    runner:append_and_hl_char(bufnr, ".")
+    runner:append_and_hl_char(bufnr, "F")
+    runner:append_and_hl_char(bufnr, "F")
+    runner:append_and_hl_char(bufnr, ".")
+    runner:append_and_hl_char(bufnr, ".")
+    runner:append_and_hl_char(bufnr, "F")
+
+    assert.are.same(runner.hl_map[1], {start_pos = 0, end_pos = 2, color = success_color})
+    assert.are.same(runner.hl_map[2], {start_pos = 2, end_pos = 4, color = failure_color})
+    assert.are.same(runner.hl_map[3], {start_pos = 4, end_pos = 6, color = success_color})
+    assert.are.same(runner.hl_map[4], {start_pos = 6, end_pos = 7, color = failure_color})
     vim.api.nvim_buf_delete(bufnr, { force = true })
   end)
 end)
+
