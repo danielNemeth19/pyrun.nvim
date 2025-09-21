@@ -111,13 +111,13 @@ The result of the test run is shown in a floating window. To close it, use `q`.
 \*In this mode runs all tests in the parent test class when the cursor is inside any test belonging to that class.
 
 ## TODO:
-* implement running closest test class - done
-* implement running closest test case - done
+* implement treesitter targeting for `def` and `class` - Done
+* implement running closest test class - Done
+* implement running closest test case - Done
+* show test result output without buffering - Done
+* improve coloring of test result: pass should be green, failure should be red - Done
 * adds test class and test case validation
-* investigate treesitter playground for `def` and `class` targeting - done
 * providing custom commands
-* improve coloring of test result: right now everything is green ('success')
-* look at stderr buffering - maybe show test result output without buffering?
 * open term in case breakpoint is used in test?
 * lazy loading based on \*test\*.py files
 * Logging, with custom command to open log file
@@ -125,3 +125,4 @@ The result of the test run is shown in a floating window. To close it, use `q`.
 
 ## Issue tracker
 * keymap seems to be "sticky" (stays in effect after leaving python buffer)
+* float window positioned incorrectly if screen has splits open
