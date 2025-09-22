@@ -166,7 +166,7 @@ function Runner:run_command(bufnr, win_id, command)
     end,
     on_stderr = function(_, data)
       for i, text in ipairs(data) do
-        if i == 1 and text == "." or text == "F" then
+        if i == 1 and text == "." or text == "F" or text == "E" then
           self:append_and_hl_char(bufnr, text)
         else
           vim.api.nvim_buf_set_lines(bufnr, -1, -1, false, { text })

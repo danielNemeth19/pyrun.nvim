@@ -310,7 +310,7 @@ describe("appending lines", function()
     local runner = Runner:new(default_opts, config)
     local bufnr = vim.api.nvim_create_buf(false, true)
     local current_lines = {
-      "Creating test database", "Found 3 test(s).", ""
+      "Creating test database", "Found 4 test(s).", ""
     }
     vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, current_lines)
     runner:append_and_hl_char(bufnr, "F")
@@ -323,11 +323,28 @@ describe("appending lines", function()
     assert.are.same(test_result, {"F.F."})
     vim.api.nvim_buf_delete(bufnr, { force = true })
   end)
+  it("can add error chars without endlines", function()
+    local runner = Runner:new(default_opts, config)
+    local bufnr = vim.api.nvim_create_buf(false, true)
+    local current_lines = {
+      "Creating test database", "Found 4 test(s).", ""
+    }
+    vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, current_lines)
+    runner:append_and_hl_char(bufnr, "E")
+    runner:append_and_hl_char(bufnr, ".")
+    runner:append_and_hl_char(bufnr, ".")
+    runner:append_and_hl_char(bufnr, "E")
+
+    vim.api.nvim_buf_set_lines(bufnr, -1, -1, false, { "Run 4 tests" })
+    local test_result = vim.api.nvim_buf_get_lines(bufnr, 2, 3, false)
+    assert.are.same(test_result, {"E..E"})
+    vim.api.nvim_buf_delete(bufnr, { force = true })
+  end)
   it("can update highlight groups based on test results", function()
     local runner = Runner:new(default_opts, config)
     local bufnr = vim.api.nvim_create_buf(false, true)
     local current_lines = {
-      "Creating test database", "Found 3 test(s).", ""
+      "Creating test database", "Found 7 test(s).", ""
     }
     vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, current_lines)
     runner:append_and_hl_char(bufnr, ".")
