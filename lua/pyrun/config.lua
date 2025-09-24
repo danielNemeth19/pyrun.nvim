@@ -52,7 +52,7 @@ local keymap_presets = {
 
 ---@type pyrun.window_config
 local window_config = {
-  relative = "win",
+  relative = "editor",
   width = 150,
   height = 40,
   style = "minimal",

@@ -106,7 +106,7 @@ describe("Runner can manage buffer and floating window", function()
       width = 40,
       height = 20,
       title = win_opts['title_prefix'] .. "test",
-      relative = "win",
+      relative = "editor",
       style = "minimal"
     }
     assert.stub(stubs.nvim_open_win).was_called_with(10, true, expected_opts)
