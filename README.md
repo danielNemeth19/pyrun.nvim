@@ -124,5 +124,5 @@ The result of the test run is shown in a floating window. To close it, use `q`.
 * metatables for inheritance?
 
 ## Issue tracker
-* keymap seems to be "sticky" (stays in effect after leaving python buffer)
+* keymap seems to be "sticky" (stays in effect after leaving python buffer) - Done
 * float window positioned incorrectly if screen has splits open - Done
