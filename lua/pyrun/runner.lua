@@ -45,9 +45,14 @@ end
 
 function Runner:get_module_path()
   local fp = vim.api.nvim_buf_get_name(0)
+  if not fp:find("test_") then
+    vim.api.nvim_echo({ { "Not a test file" } }, true, { err = false })
+    return false
+  end
   self:find_manage_file(fp)
   if not self.manage_file then
-    return
+    vim.api.nvim_echo({ { "Not a Django project" } }, true, { err = false })
+    return false
   end
   local module_path = self:filepath_to_module_name(fp)
   return module_path
@@ -144,22 +149,9 @@ function Runner:run_closest_test()
   self:run_command(bufnr, win_id, command)
 end
 
-function Runner:is_test_file()
-  local fp = vim.api.nvim_buf_get_name(0)
-  if not fp:find("test_") then
-    vim.api.nvim_echo({ { "Not a test file" } }, true, { err = true })
-    return false
-  end
-  return true
-end
-
 function Runner:run_all()
-  if not self:is_test_file() then
-    return
-  end
   local module_path = self:get_module_path()
   if not module_path then
-    vim.api.nvim_echo({ { "Not a Django project" } }, true, { err = true })
     return
   end
   local command = { self.lang, self.manage_file, "test", module_path }

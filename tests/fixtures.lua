@@ -66,7 +66,7 @@ class AbstractTestClassFromLine44(TestCase):
 --- @param filetype string
 --- @return integer bufnr
 --- @return integer win_id
-function M._setup(input, filetype)
+function M._setup(input, filetype, name)
   local bufnr = vim.api.nvim_create_buf(false, true)
   local win_id = vim.api.nvim_open_win(bufnr, true, {
     relative = "editor",
@@ -87,7 +87,7 @@ function M.setup_opened_buffer(opts)
   if opts.invalid then
     code, filetype = "", "unsupportedft"
   end
-  return M._setup(code, filetype)
+  return M._setup(code, filetype, name)
 end
 
 ---@param bufnr integer
